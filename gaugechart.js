@@ -159,13 +159,17 @@ const drawGaugeChart = function (selector, width, score, slabData) {
     });
     
     // Score display
+    var scoreDisplay = score.toFixed(1) === getSlabProperty(score, 'slabMax').toFixed(1)
+                        ? (Math.floor(score * 10) / 10).toFixed(1)
+                        : score.toFixed(1);
+
     g.append('text')
         .attr('class', scoreDisplayClass)
         .attr('text-anchor', 'middle')
         .attr('dy', - arcWidth * 4)
         .style('font-size', scoreDisplayFontSize)
         .style('fill', textColor)
-        .text(score.toFixed(1));
+        .text(scoreDisplay);
     
     // Assessment display
     g.append('text')
