@@ -22,6 +22,7 @@ const percentToRadian = d3.scaleLinear()
 const drawGaugeChart = function (selector, width, score, slabData) {
     var padPercent = 1.0,
         scoreSnapPercent = 2.5,
+        scoreDecimalPrecision = 1,
         bgColor = '#FFF',
         textColor = '#000',
 
@@ -159,9 +160,10 @@ const drawGaugeChart = function (selector, width, score, slabData) {
     });
     
     // Score display
+    var precisionFactor = Math.pow(10, scoreDecimalPrecision);
     var scoreDisplay = score.toFixed(1) === getSlabProperty(score, 'slabMax').toFixed(1)
-                        ? (Math.floor(score * 10) / 10).toFixed(1)
-                        : score.toFixed(1);
+                        ? (Math.floor(score * precisionFactor) / precisionFactor).toFixed(scoreDecimalPrecision)
+                        : score.toFixed(scoreDecimalPrecision);
 
     g.append('text')
         .attr('class', scoreDisplayClass)
