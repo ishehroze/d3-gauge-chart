@@ -71,13 +71,25 @@ const drawGaugeChart = function (selector, width, score, slabData) {
     
     const translatePointerLocation = function(score) {
     // used for getting the location of the circle-shaped pointer in the chart given the score value
-        var scoreSnapExact = percentToScoreDelta(scoreSnapPercent),
-            slabMinSnap = getSlabProperty(score, 'slabMin') + scoreSnapExact,
-            slabMaxSnap = getSlabProperty(score, 'slabMax') - scoreSnapExact;
+        var scoreSnapBoundaryExact = percentToScoreDelta(scoreSnapPercent),
+            scoreSnapInboundExact = percentToScoreDelta(scoreSnapPercent + 1),
+            slabMin = getSlabProperty(score, 'slabMin'),
+            slabMax = getSlabProperty(score, 'slabMax'),
+            slabMinSnap = slabMin + scoreSnapBoundaryExact,
+            slabMinInboundSnap = slabMin + scoreSnapInboundExact,
+            slabMaxSnap = slabMax - scoreSnapBoundaryExact,
+            slabMaxInboundSnap = slabMax - scoreSnapInboundExact;
         
-        score = score < slabMinSnap ? slabMinSnap : score; // condition for pointer snapping to slab minimum
-        score = score > slabMaxSnap ? slabMaxSnap : score; // condition for pointer snapping to slab maximum
-    
+        // condition for pointer snapping to slab minimum or a bit inside
+        if (score < slabMinSnap) {
+            score = score === slabMin ? slabMinSnap : slabMinInboundSnap;
+        }
+        
+        // condition for pointer snapping to slab maximum or a bit inside
+        if (score > slabMaxSnap) {
+            score = score === slabMax ? slabMaxSnap : slabMaxInboundSnap;
+        }
+
         var x = (arcInnerRadius - arcWidth / 2) * Math.cos(scoreToRadian(score) - Math.PI),
             y = (arcInnerRadius - arcWidth / 2) * Math.sin(scoreToRadian(score) - Math.PI);
         
