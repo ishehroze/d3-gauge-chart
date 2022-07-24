@@ -81,12 +81,12 @@ const drawGaugeChart = function (selector, width, score, slabData) {
             slabMaxInboundSnap = slabMax - scoreSnapInboundExact;
         
         // condition for pointer snapping to slab minimum or a bit inside
-        if (score < slabMinSnap) {
+        if (score < slabMinInboundSnap) {
             score = score <= slabMin ? slabMinSnap : slabMinInboundSnap;
         }
         
         // condition for pointer snapping to slab maximum or a bit inside
-        if (score > slabMaxSnap) {
+        if (score > slabMaxInboundSnap) {
             score = score >= slabMax ? slabMaxSnap : slabMaxInboundSnap;
         }
 
