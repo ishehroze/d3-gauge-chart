@@ -1,0 +1,29 @@
+<head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="gaugechart.js"></script>
+	<style>
+		@import url('http://fonts.cdnfonts.com/css/d-din');
+		svg.meter-gauge {
+			font-family: 'Bahnschrift', 'D-DIN', 'Roboto', 'San Francisco', 'Helvetica', 'Arial', san-serif;
+			display: block;
+			margin: auto;
+		}	
+		.meter-gauge .scoredisplay, .meter-gauge .assessment {
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+    <svg id="financing-score-meter"></svg>
+	<p> I don't know what the score is but I guess it is bad</p>
+    <script>
+		d3.json("scoredata.json", function (score) {
+			d3.json("slabdata.json", function (slabData) {
+				var chartSelector = "#financing-score-meter"
+					chartWidth = 500;
+				
+				drawGaugeChart(chartSelector, chartWidth, score, slabData);
+			})
+		});
+    </script>
+</body>
