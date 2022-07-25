@@ -91,6 +91,11 @@ const drawGaugeChart = function (selector, width, score, slabData) {
             score = score >= slabMax ? slabMaxSnap : slabMaxInboundSnap;
         }
 
+        // condition for pointer when slab arc is to small for snapping
+        if (slabMinInboundSnap >= slabMaxInboundSnap) {
+            score = (slabMin + slabMax) / 2;
+        }
+
         var x = (arcInnerRadius - arcWidth / 2) * Math.cos(scoreToRadian(score) - Math.PI),
             y = (arcInnerRadius - arcWidth / 2) * Math.sin(scoreToRadian(score) - Math.PI);
         
