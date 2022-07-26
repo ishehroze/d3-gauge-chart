@@ -1,0 +1,18 @@
+@import url('http://fonts.cdnfonts.com/css/d-din');
+svg.meter-gauge {
+    font-family: 'Bahnschrift', 'D-DIN', 'Roboto', 'San Francisco', 'Helvetica', 'Arial', san-serif;
+    display: block;
+    margin: auto;
+}	
+.meter-gauge .scoredisplay, .meter-gauge .assessment {
+    font-weight: bold;
+}
+.meter-gauge .scoredisplay {
+	font-size: 9em;
+}
+.meter-gauge .assessment {
+	font-size: 4.5em;
+}
+.meter-gauge .scorelimit {
+	font-size: 2.5em;
+}
