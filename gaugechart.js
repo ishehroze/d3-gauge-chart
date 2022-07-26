@@ -79,19 +79,17 @@ const drawGaugeChart = function (selector, width, score, slabData) {
             slabMaxSnap = slabMax - scoreSnapBoundaryExact,
             slabMaxInboundSnap = slabMax - scoreSnapInboundExact;
         
-        // condition for pointer snapping to slab minimum or a bit inside
-        if (score < slabMinInboundSnap) {
-            score = score <= slabMin ? slabMinSnap : slabMinInboundSnap;
-        }
-        
-        // condition for pointer snapping to slab maximum or a bit inside
-        if (score > slabMaxInboundSnap) {
-            score = score >= slabMax ? slabMaxSnap : slabMaxInboundSnap;
-        }
-
-        // condition for pointer when slab arc is to small for snapping
         if (slabMinInboundSnap >= slabMaxInboundSnap) {
-            score = (slabMin + slabMax) / 2;
+            score = (slabMin + slabMax) / 2; // condition for pointer when slab arc is
+                                             // too small for snapping
+        } else if (score < slabMinInboundSnap) {
+            score = score <= slabMin ? slabMinSnap : slabMinInboundSnap; // condition for pointer snapping
+                                                                         // to slab minimum or a bit inside
+        } else if (score > slabMaxInboundSnap) {
+            score = score >= slabMax ? slabMaxSnap : slabMaxInboundSnap; // condition for pointer snapping
+                                                                         // to slab maximum or a bit inside
+        } else {
+            // pass
         }
 
         var x = (arcInnerRadius - arcWidth / 2) * Math.cos(scoreToRadian(score) - Math.PI),
