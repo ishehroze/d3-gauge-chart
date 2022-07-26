@@ -35,9 +35,7 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         height = width / (2 * 0.8),
         arcInnerRadius = width * 0.4,
         arcWidth = arcInnerRadius * 0.06,
-        scoreLimitFontSize = arcWidth * 1.75,
-        scoreDisplayFontSize = arcInnerRadius / 2.25,
-        assessmentFontSize = scoreDisplayFontSize / 2.25;
+        baseFontSize = (width * 0.02).toFixed(1) + "px";
     
     slabData.sort((row1, row2) => d3.ascending(row1.slabMin, row2.slabMin)); // sorts rows based on slabMin property 
     
@@ -106,6 +104,7 @@ const drawGaugeChart = function (selector, width, score, slabData) {
                 .attr('width', width) 
                 .attr('height', height)
                 .attr('class', chartClass)
+                .attr('font-size', baseFontSize)
                 .style('background-color', bgColor)
                 .append('g')
                 .attr('transform', 'translate(' + width / 2 + ',' + height * 4 / 5 + ')');
@@ -159,7 +158,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         .attr('x', l.xLocation)
         .attr('text-anchor', 'middle')
         .attr('dy', arcWidth * 2)
-        .style('font-size', scoreLimitFontSize)
         .style('fill', textColor)
         .text(l.label);
     });
@@ -174,7 +172,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         .attr('class', scoreDisplayClass)
         .attr('text-anchor', 'middle')
         .attr('dy', - arcWidth * 4)
-        .style('font-size', scoreDisplayFontSize)
         .style('fill', textColor)
         .text(scoreDisplay);
     
@@ -183,7 +180,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         .attr('class', assessmentClass)
         .attr('text-anchor', 'middle')
         .attr('dy', arcWidth * 0.1)
-        .style('font-size', assessmentFontSize)
         .style('fill', textColor)
         .text(getSlabProperty(score, 'assessment'));
 }
