@@ -44,11 +44,19 @@ const drawGaugeChart = function (selector, width, score, slabData) {
     
     const scoreToRadian = d3.scaleLinear() 
                             .domain([minScore, maxScore])
-                            .range([0, Math.PI]);
-                        
+                            .range([-Math.PI / 2, Math.PI / 2]);
+
+    const scoreToDegreesDelta = d3.scaleLinear()
+                                    .domain([minScore, maxScore])
+                                    .range([0, 180]);
+
     const percentToScoreDelta = d3.scaleLinear()
                                     .domain([0, 100])
                                     .range([0, maxScore - minScore]);
+
+    const percentToDegreeDelta = d3.scaleLinear()
+                                    .domain([0, 100])
+                                    .range([0, 180]);
     
     var columnData = arrayToObject(slabData),
         thresholds = columnData['slabMin'].map(item => item); // creates a slabMin array clone thresholds array
@@ -67,8 +75,12 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         
         return dataGetters[property](score);
     };
-    
-    const translatePointerLocation = function(score) {
+
+    const scoreInterpolator = d3.scaleLinear()
+                                .domain([0, 1])
+                                .range([minScore, score]);
+
+    const rotatePointerWithSnapping = function(score) {
     // used for getting the location of the circle-shaped pointer in the chart given the score value
         var scoreSnapBoundaryExact = percentToScoreDelta(scoreSnapPercent),
             scoreSnapInboundExact = percentToScoreDelta(scoreSnapPercent + 1),
@@ -92,11 +104,27 @@ const drawGaugeChart = function (selector, width, score, slabData) {
             // pass
         }
 
-        var x = (arcInnerRadius - arcWidth / 2) * Math.cos(scoreToRadian(score) - Math.PI),
-            y = (arcInnerRadius - arcWidth / 2) * Math.sin(scoreToRadian(score) - Math.PI);
-        
-        return 'translate(' + x + ',' + y + ')';
+        return scoreToDegreesDelta(score);
     }
+
+    var pointerInitialRotation = percentToDegreeDelta(scoreSnapPercent),
+        pointerInitialTranslation = 'translate(' + (-arcInnerRadius + arcWidth / 2) + ', 0)';
+        pointerInitialTransform = 'rotate(' + pointerInitialRotation + ') ' + pointerInitialTranslation;
+
+    const getScoreDisplayText = function (score) {
+    // Score display text
+        var precisionFactor = Math.pow(10, scoreDecimalPrecision);
+        var scoreDisplay = score.toFixed(1) === getSlabProperty(score, 'slabMax').toFixed(1)
+                            ? (Math.floor(score * precisionFactor) / precisionFactor).toFixed(scoreDecimalPrecision)
+                            : score.toFixed(scoreDecimalPrecision);
+        
+        return scoreDisplay;
+    };
+
+    const pointerLocationInterpolator = i => translatePointerLocationSnapless(scoreInterpolator(i));
+    const scoreDisplayTextInterpolator = i => getScoreDisplayText(scoreInterpolator(i));
+    const assessmentInterpolator = i => getSlabProperty('assessment', scoreInterpolator(i));
+    const colorInterpolator = i => getSlabProperty('color', scoreInterpolator(i));
 
     var g = d3.select(selector)
                 .attr('width', width) 
@@ -112,8 +140,8 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         var arc = d3.arc()
                     .innerRadius(arcInnerRadius)
                     .outerRadius(arcInnerRadius - arcWidth)
-                    .startAngle(scoreToRadian(d.slabMin) - Math.PI / 2)
-                    .endAngle(scoreToRadian(d.slabMax) - Math.PI / 2)
+                    .startAngle(scoreToRadian(d.slabMin))
+                    .endAngle(scoreToRadian(d.slabMax))
                     .padAngle(percentToRadian(padPercent))
                     .cornerRadius(arcWidth);
         
@@ -122,21 +150,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
             .attr('fill', d.color)
             .attr('d', arc); 
     });
-
-    // Circle-shaped pointer
-    var pointerArc = d3.arc()
-                        .innerRadius(0)
-                        .outerRadius(arcWidth * 0.8)
-                        .startAngle(0)
-                        .endAngle(8);
-    
-    g.append('path')
-        .attr('class', pointerClass)
-        .attr('transform', translatePointerLocation(score))
-        .attr('fill', bgColor)
-        .attr('stroke', getSlabProperty(score, 'color'))
-        .attr('stroke-width', arcWidth / 1.5)
-        .attr('d', pointerArc);
 
     // Score limit labels
     scoreLimits = [
@@ -159,19 +172,80 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         .style('fill', textColor)
         .text(l.label);
     });
-    
-    // Score display
-    var precisionFactor = Math.pow(10, scoreDecimalPrecision);
-    var scoreDisplay = score.toFixed(1) === getSlabProperty(score, 'slabMax').toFixed(1)
-                        ? (Math.floor(score * precisionFactor) / precisionFactor).toFixed(scoreDecimalPrecision)
-                        : score.toFixed(scoreDecimalPrecision);
 
+    // Circle-shaped pointer
+    var pointerArc = d3.arc()
+                        .innerRadius(0)
+                        .outerRadius(arcWidth * 0.8)
+                        .startAngle(0)
+                        .endAngle(8);
+    
+    var delay = 200,
+        duration = 1500,
+        ease = d3.easeCubic;
+
+    var pointer = g.append('path')
+        .attr('class', pointerClass)
+        .attr('fill', bgColor)
+        .attr('stroke-width', arcWidth / 1.5)
+        .attr('d', pointerArc)
+        .attr('transform', pointerInitialTransform)
+        .attr('stroke', getSlabProperty(minScore, 'color'));
+
+    pointer
+        .transition("move")
+        .ease(ease)
+        .delay(delay)
+        .duration(duration)
+        .attrTween('transform', function () {
+            var pointerRotation = rotatePointerWithSnapping(score);
+            var pointerFinalLocation = 'rotate(' + pointerRotation + ') ' + pointerInitialTranslation;
+
+            return d3.interpolateString(pointerInitialTransform, pointerFinalLocation);
+        });
+    
+    pointer
+        .transition("changeColor")
+        .ease(ease)
+        .delay(delay)
+        .duration(duration)
+        .attrTween('stroke', function () {
+            var node = this,
+                t = d3.interpolateNumber(minScore, score);
+
+            return function (i) {
+                var strokeColor = getSlabProperty(t(i), 'color');
+                return strokeColor;
+            }
+        });
+
+    // Score display
     g.append('text')
         .attr('class', scoreDisplayClass)
         .attr('text-anchor', 'middle')
         .attr('dy', - arcWidth * 4)
         .style('fill', textColor)
-        .text(scoreDisplay);
+        .text(getScoreDisplayText(minScore))
+        .transition()
+        .ease(ease)
+        .delay(delay)
+        .duration(duration)
+        .tween('text', function () {
+            var node = this;
+            var precisionFactor = Math.pow(10, scoreDecimalPrecision);
+            var startPoint = +node.textContent * precisionFactor;
+
+            var t = d3.interpolateRound(
+                startPoint * precisionFactor,
+                +getScoreDisplayText(score) * precisionFactor
+            )
+
+            return function (i) {
+                var textContent = (t(i) / precisionFactor).toFixed(1);
+                node.textContent = textContent;
+            };
+        });
+//        .text(getScoreDisplayText(score));
     
     // Assessment display
     g.append('text')
@@ -179,5 +253,18 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         .attr('text-anchor', 'middle')
         .attr('dy', arcWidth * 0.1)
         .style('fill', textColor)
-        .text(getSlabProperty(score, 'assessment'));
+        .text(getSlabProperty(minScore, 'assessment'))
+        .transition()
+        .delay(delay)
+        .duration(duration)
+        .ease(ease)
+        .tween('text', function () {
+            var node = this,
+                t = d3.interpolateNumber(minScore, score);
+
+            return function (i) {
+                var textContent = getSlabProperty(t(i), 'assessment');
+                node.textContent = textContent;
+            };
+        });
 }
