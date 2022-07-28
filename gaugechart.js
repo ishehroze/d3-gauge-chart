@@ -15,10 +15,6 @@ const arrayToObject = function (arrayOfObjects) {
     return objectOfArrays;
 };
 
-const percentToRadian = d3.scaleLinear() 
-                            .domain([0, 100])
-                            .range([0, Math.PI]);
-
 const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
     var padPercent = 1.0,
         scoreSnapPercent = 2.5,
@@ -56,6 +52,10 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
     const scoreToDegreesDelta = d3.scaleLinear()
                                     .domain([minScore, maxScore])
                                     .range([0, 180]);
+
+    const percentToRadian = d3.scaleLinear() 
+                                .domain([0, 100])
+                                .range([0, Math.PI]);
 
     const percentToScoreDelta = d3.scaleLinear()
                                     .domain([0, 100])
@@ -157,11 +157,9 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         return scoreToDegreesDelta(score);
     }
 
-    var pointerInitialRotation = percentToDegreeDelta(scoreSnapPercent),
-        pointerInitialTranslation = "translate(" + (-arcInnerRadius + arcWidth / 2) + ", 0)",
-        pointerInitialTransform = "rotate(" + pointerInitialRotation + ") " + pointerInitialTranslation,
+    var pointerTranslation = "translate(" + (-arcInnerRadius + arcWidth / 2) + ", 0)",
         pointerFinalRotation = rotatePointerWithSnapping(score),
-        pointerFinalTransform = "rotate(" + pointerFinalRotation + ") " + pointerInitialTranslation;
+        pointerFinalTransform = "rotate(" + pointerFinalRotation + ") " + pointerTranslation;
 
     var pointerArc = d3.arc()
                         .innerRadius(0)
@@ -175,6 +173,9 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         .attr("d", pointerArc)
     
     if (isAnimated) {
+        var pointerInitialRotation = percentToDegreeDelta(scoreSnapPercent),
+            pointerInitialTransform = "rotate(" + pointerInitialRotation + ") " + pointerTranslation;
+
         pointer.attr("transform", pointerInitialTransform)
             .attr("stroke", getSlabProperty(minScore, colorKey));
 
@@ -236,7 +237,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                 )
 
                 return function (i) {
-                    var textContent = (t(i) / precisionFactor).toFixed(1);
+                    var textContent = (t(i) / precisionFactor).toFixed(scoreDecimalPrecision);
                     node.textContent = textContent;
                 };
             });
