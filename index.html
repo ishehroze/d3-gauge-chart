@@ -9,11 +9,12 @@
     <script>
 		d3.json("scoredata.json", function (score) {
 			d3.json("slabdata.json", function (slabData) {
-				var chartSelector = "#financing-score-meter"
-					chartWidth = 500;
+				var chartSelector = "#financing-score-meter",
+					chartWidth = 500,
+					isAnimated = true;
 				
-				drawGaugeChart(chartSelector, chartWidth, score, slabData);
-			});
-		});
+				drawGaugeChart(chartSelector, chartWidth, score, slabData, isAnimated);
+			})
+		})
     </script>
 </body>
