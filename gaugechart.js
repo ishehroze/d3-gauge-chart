@@ -120,14 +120,15 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         }
     ]
 
-    scoreLimits.forEach(function (l) {
-        g.append("text")
+    g.selectAll("text")
+        .data(scoreLimits)
+        .enter()
+        .append("text")
         .attr("class", scoreLimitClassName)
-        .attr("x", l.xLocation)
+        .attr("x", d => d.xLocation)
         .attr("text-anchor", "middle")
         .attr("dy", arcWidth * 2)
-        .text(l.label);
-    });
+        .text(d => d.label);
 
     // Circle-shaped pointer
     const rotatePointerWithSnapping = function(score) {
