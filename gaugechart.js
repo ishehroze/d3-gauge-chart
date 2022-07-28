@@ -76,10 +76,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         return dataGetters[property](score);
     };
 
-    const scoreInterpolator = d3.scaleLinear()
-                                .domain([0, 1])
-                                .range([minScore, score]);
-
     const rotatePointerWithSnapping = function(score) {
     // used for getting the location of the circle-shaped pointer in the chart given the score value
         var scoreSnapBoundaryExact = percentToScoreDelta(scoreSnapPercent),
@@ -120,11 +116,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
         
         return scoreDisplay;
     };
-
-    const pointerLocationInterpolator = i => translatePointerLocationSnapless(scoreInterpolator(i));
-    const scoreDisplayTextInterpolator = i => getScoreDisplayText(scoreInterpolator(i));
-    const assessmentInterpolator = i => getSlabProperty('assessment', scoreInterpolator(i));
-    const colorInterpolator = i => getSlabProperty('color', scoreInterpolator(i));
 
     var g = d3.select(selector)
                 .attr('width', width) 
@@ -245,7 +236,6 @@ const drawGaugeChart = function (selector, width, score, slabData) {
                 node.textContent = textContent;
             };
         });
-//        .text(getScoreDisplayText(score));
     
     // Assessment display
     g.append('text')
