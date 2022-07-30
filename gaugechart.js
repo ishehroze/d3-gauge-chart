@@ -93,42 +93,30 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                 .attr("transform", "translate(" + width / 2 + "," + height * 4 / 5 + ")");
     
     // Slab arcs
-    slabData.forEach(function (d) {
+    const getSlabArc = function (d) {
+        var slabMin = d[slabMinKey],
+            slabMax = d[slabMaxKey];
+
         var arc = d3.arc()
                     .innerRadius(arcInnerRadius)
                     .outerRadius(arcInnerRadius - arcWidth)
-                    .startAngle(scoreToRadian(d.slabMin))
-                    .endAngle(scoreToRadian(d.slabMax))
+                    .startAngle(scoreToRadian(slabMin))
+                    .endAngle(scoreToRadian(slabMax))
                     .padAngle(percentToRadian(padPercent))
                     .cornerRadius(arcWidth);
-        
-        g.append("path")
-            .attr("class", "slab-arc")
-            .attr("fill", d.color)
-            .attr("d", arc); 
-    });
 
-    // Score limit labels
-    scoreLimits = [
-        {
-            label: minScore,
-            xLocation: -arcInnerRadius + arcWidth / 2
-        },
-        {
-            label: maxScore,
-            xLocation: arcInnerRadius - arcWidth / 2            
-        }
-    ]
+        return arc();
+    }
 
-    g.selectAll("text")
-        .data(scoreLimits)
+    g.selectAll("path")
+        .data(slabData)
         .enter()
-        .append("text")
-        .attr("class", scoreLimitClassName)
-        .attr("x", d => d.xLocation)
-        .attr("text-anchor", "middle")
-        .attr("dy", arcWidth * 2)
-        .text(d => d.label);
+        .append("path")
+        .attr("class", "slab-arc")
+        .attr("data-slab-min", d => d[slabMinKey])
+        .attr("data-slab-max", d => d[slabMaxKey])
+        .attr("fill", d => d[colorKey])
+        .attr("d", d => getSlabArc(d));
 
     // Circle-shaped pointer
     const rotatePointerWithSnapping = function(score) {
@@ -204,6 +192,29 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         pointer.attr("transform", pointerFinalTransform)
             .attr("stroke", getSlabProperty(score, colorKey));
     }
+ 
+    // Score limit labels
+
+    scoreLimits = [
+        {
+            label: minScore,
+            xLocation: -arcInnerRadius + arcWidth / 2
+        },
+        {
+            label: maxScore,
+            xLocation: arcInnerRadius - arcWidth / 2            
+        }
+    ]
+
+    g.selectAll("text")
+        .data(scoreLimits)
+        .enter()
+        .append("text")
+        .attr("class", scoreLimitClassName)
+        .attr("x", d => d.xLocation)
+        .attr("text-anchor", "middle")
+        .attr("dy", arcWidth * 2)
+        .text(d => d.label);
 
     // Score display
     const getScoreDisplayText = function (score) {
