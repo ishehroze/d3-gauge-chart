@@ -115,6 +115,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         .attr("class", "slab-arc")
         .attr("data-slab-min", d => d[slabMinKey])
         .attr("data-slab-max", d => d[slabMaxKey])
+        .attr("data-assessment", d => d[assessmentKey])
         .attr("fill", d => d[colorKey])
         .attr("d", d => getSlabArc(d));
 
