@@ -7,7 +7,6 @@ svg.meter-gauge {
 }
 .meter-gauge .pointer {
     fill: white;
-    z-index: 100;
 }
 .meter-gauge .scoredisplay, .meter-gauge .assessment {
     fill: black;
