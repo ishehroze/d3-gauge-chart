@@ -21,6 +21,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         scoreDecimalPrecision = 1,
 
         chartClassName = "meter-gauge",
+        slabArcClassName = "slab-arc",
         pointerClassName = "pointer",
         scoreLimitClassName = "scorelimit",
         scoreDisplayClassName = "scoredisplay",
@@ -37,7 +38,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
 
         height = width / (2 * 0.8),
         arcInnerRadius = width * 0.4,
-        arcWidth = arcInnerRadius * 0.06,
+        arcWidth = arcInnerRadius * 0.05,
         baseFontSize = (width * 0.02).toFixed(1) + "px";
     
     slabData.sort((row1, row2) => d3.ascending(row1[slabMinKey], row2[slabMinKey])); // sorts rows based on slabMin property 
@@ -112,12 +113,63 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         .data(slabData)
         .enter()
         .append("path")
-        .attr("class", "slab-arc")
+        .attr("class", slabArcClassName)
         .attr("data-slab-min", d => d[slabMinKey])
         .attr("data-slab-max", d => d[slabMaxKey])
+        .style("stroke", d => d[colorKey])
         .attr("data-assessment", d => d[assessmentKey])
         .attr("fill", d => d[colorKey])
         .attr("d", d => getSlabArc(d));
+
+    var assessmentText = getSlabProperty(score, assessmentKey);
+
+    if (isAnimated) {
+        var classNamesHiddenOnArcHover = [scoreDisplayClassName, pointerClassName],
+            hiddenOnArcHoverSelector = classNamesHiddenOnArcHover.map(className => "." + className).join(", "),
+            slabArcsSelector = "." + slabArcClassName,
+            assessmentSelector = "." + assessmentClassName,
+            minLimitSelector = "." + scoreLimitClassName + ".min-limit",
+            maxLimitSelector = "." + scoreLimitClassName + ".max-limit";
+
+        const hoverAction = function (selector, isHoverActive) {
+            var slabArc = selector,
+            isHidden = isHoverActive,
+            isArcActive = isHoverActive,
+            slabAssessmentText = isHoverActive ? slabArc.attr("data-assessment") : assessmentText,
+            slabMinLimitText = isHoverActive ? slabArc.attr("data-slab-min") : minScore,
+            slabMaxLimitText = isHoverActive ? slabArc.attr("data-slab-max") : maxScore,
+            slabArcFillColor = isHoverActive ? slabArc.style("fill") : null;
+
+            g.selectAll(hiddenOnArcHoverSelector).classed("hidden", isHidden);
+            slabArc.classed("active", isArcActive);
+
+            g.select(assessmentSelector).text(slabAssessmentText).style("fill", slabArcFillColor);
+            g.select(minLimitSelector).text(slabMinLimitText).style("fill", slabArcFillColor);
+            g.select(maxLimitSelector).text(slabMaxLimitText).style("fill", slabArcFillColor);
+        }
+
+        g.selectAll(slabArcsSelector)
+            .on("mouseover", function (d) {
+                var slabArc = this;
+                hoverAction(d3.select(slabArc), true);
+
+                g.selectAll(slabArcsSelector)
+                    .filter(function () {
+                        return !this.classList.contains("active");
+                    })
+                    .classed("transparent", true);
+            })
+            .on("mouseout", function (d) {
+                var slabArc = this;
+                hoverAction(d3.select(slabArc), false);
+
+                g.selectAll(slabArcsSelector)
+                    .filter(function () { 
+                        return this.classList.contains("transparent");
+                    })
+                    .classed("transparent", false);
+            });
+    }
 
     // Circle-shaped pointer
     const rotatePointerWithSnapping = function(score) {
@@ -167,7 +219,13 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
             pointerInitialTransform = "rotate(" + pointerInitialRotation + ") " + pointerTranslation;
 
         pointer.attr("transform", pointerInitialTransform)
-            .attr("stroke", getSlabProperty(minScore, colorKey));
+            .attr("stroke", getSlabProperty(minScore, colorKey))
+            .on("mouseover", function (d) {
+                d3.select(this).classed("hidden", true);
+            })
+            .on("mouseout", function (d) {
+                d3.select(this).classed("hidden", false);
+            });
 
         pointer.transition("move")
             .ease(ease)
@@ -199,11 +257,13 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
     scoreLimits = [
         {
             label: minScore,
-            xLocation: -arcInnerRadius + arcWidth / 2
+            xLocation: -arcInnerRadius + arcWidth / 2,
+            specialClassName: "min-limit"
         },
         {
             label: maxScore,
-            xLocation: arcInnerRadius - arcWidth / 2            
+            xLocation: arcInnerRadius - arcWidth / 2,
+            specialClassName: "max-limit"            
         }
     ]
 
@@ -211,7 +271,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         .data(scoreLimits)
         .enter()
         .append("text")
-        .attr("class", scoreLimitClassName)
+        .attr("class", d => scoreLimitClassName + " " + d.specialClassName)
         .attr("x", d => d.xLocation)
         .attr("text-anchor", "middle")
         .attr("dy", arcWidth * 2)
@@ -280,6 +340,6 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                 };
             });
     } else {
-        assessmentDisplayElement.text(getSlabProperty(score, assessmentKey));
+        assessmentDisplayElement.text(assessmentText);
     }
 }
