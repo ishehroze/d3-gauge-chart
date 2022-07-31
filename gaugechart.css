@@ -24,14 +24,31 @@ svg.meter-gauge {
 }
 .meter-gauge .slab-arc {
     stroke-width: 0;
-    z-index: 0;
 }
 .meter-gauge .slab-arc.active {
+    animation-name: thickenArc;
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+}
+@keyframes thickenArc {
+    to {
+        stroke-width: 1%; 
     stroke-width: 1%;
+        stroke-width: 1%; 
+    }
 }
 .meter-gauge .hidden {
     display: none;
 }
 .meter-gauge .transparent {
+    animation-name: fadeArcs;
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+}
+@keyframes fadeArcs {
+    to {
+        opacity: 0.07; 
     opacity: 0.07;
+        opacity: 0.07; 
+    }
 }
