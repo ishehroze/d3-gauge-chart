@@ -33,8 +33,6 @@ svg.meter-gauge {
 @keyframes thickenArc {
     to {
         stroke-width: 1%; 
-    stroke-width: 1%;
-        stroke-width: 1%; 
     }
 }
 .meter-gauge .hidden {
