@@ -22,3 +22,16 @@ svg.meter-gauge {
 .meter-gauge .assessment {
 	font-size: 4.5em;
 }
+.meter-gauge .slab-arc {
+    stroke-width: 0;
+    z-index: 0;
+}
+.meter-gauge .slab-arc.active {
+    stroke-width: 1%;
+}
+.meter-gauge .hidden {
+    display: none;
+}
+.meter-gauge .transparent {
+    opacity: 0.07;
+}
