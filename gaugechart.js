@@ -143,19 +143,14 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
 
         const translateScoreLimits = function (minLimit, maxLimit) {
             var radius = arcInnerRadius - arcWidth / 2,
-                reverseOffsetX = radius * 2,
-                distance = arcInnerRadius / 8,
-                dy = -arcWidth * 2,
+                distance = arcInnerRadius / 8.25,
+                dy = arcWidth * 2,
                 angleAdjustment = percentToRadianDelta(padPercent) / 2,
                 minAngleGap = percentToRadianDelta(6);
 
-            minLimit = +minLimit;
-            maxLimit = +maxLimit;
-
-            var minAngle = scoreToRadianDelta(minLimit); // + angleAdjustment / 2,
-                maxAngle = scoreToRadianDelta(maxLimit); // + angleAdjustment / 2,
-                minAngle = minScore === minLimit ? minAngle - angleAdjustment : minLimit;
-
+            var minAngle = scoreToRadianDelta(minLimit) + angleAdjustment,
+                maxAngle = scoreToRadianDelta(maxLimit) + angleAdjustment;
+                
             if ((maxAngle - minAngle) < minAngleGap) {
                 var midAngle = (maxAngle + minAngle) / 2;
 
@@ -163,12 +158,18 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                 maxAngle = midAngle + minAngleGap / 2;
             }
 
-            var minXLoc = radius * (1 + Math.cos(minAngle - Math.PI)) - distance * Math.cos(minAngle),
-                maxXLoc = radius * (1 + Math.cos(maxAngle - Math.PI)) - distance * Math.cos(maxAngle) + reverseOffsetX,
-                minYLoc = - (radius * Math.sin(minAngle) + distance * Math.sin(minAngle) + dy),
-                maxYLoc = - (radius * Math.sin(maxAngle) + distance * Math.sin(maxAngle) + dy);
-
-            console.log(minAngle * 180 / Math.PI);
+            var minXLoc = minLimit === minScore
+                    ? -distance
+                    : radius * (Math.cos(minAngle + Math.PI) + 1) - distance * Math.cos(minAngle),
+                minYLoc = minLimit === minScore
+                    ? 0
+                    : - (radius * Math.sin(minAngle) + distance * Math.sin(minAngle) + dy),
+                maxXLoc = maxLimit === maxScore
+                    ? distance
+                    : radius * (Math.cos(maxAngle + Math.PI) - 1) - distance * Math.cos(maxAngle),
+                maxYLoc = maxLimit === maxScore
+                    ? 0
+                    : - (radius * Math.sin(maxAngle) + distance * Math.sin(maxAngle) + dy);
 
             return [
                 "translate(" + minXLoc + ", " + minYLoc + ")",
@@ -179,10 +180,12 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         const hoverAction = function (selector, isHoverActive) {
             var slabArc = selector.classed("active", isHoverActive),
                 slabAssessmentText = isHoverActive ? slabArc.attr("data-assessment") : assessmentText,
-                slabMinLimitText = isHoverActive ? slabArc.attr("data-slab-min") : minScore,
-                slabMaxLimitText = isHoverActive ? slabArc.attr("data-slab-max") : maxScore;
+                slabMinLimit = +slabArc.attr("data-slab-min"),
+                slabMaxLimit = +slabArc.attr("data-slab-max"),
+                slabMinLimitText = isHoverActive ? slabMinLimit : minScore,
+                slabMaxLimitText = isHoverActive ? slabMaxLimit : maxScore;
 
-            var slabLimitAttrTransforms = translateScoreLimits(slabMinLimitText, slabMaxLimitText),
+            var slabLimitAttrTransforms = translateScoreLimits(slabMinLimit, slabMaxLimit),
                 slabMinLimitAttrTransform = isHoverActive ? slabLimitAttrTransforms[0] : null,
                 slabMaxLimitAttrTransform = isHoverActive ? slabLimitAttrTransforms[1] : null;
 
