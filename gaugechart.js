@@ -109,11 +109,14 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         return arc();
     }
 
+    const isTargetSlab = d => d[slabMinKey] == getSlabProperty(score, slabMinKey)
+
     g.selectAll("path")
         .data(slabData)
         .enter()
         .append("path")
-        .attr("class", slabArcClassName)
+        .classed(slabArcClassName, true)
+        .classed("target", d => isTargetSlab(d))
         .attr("data-slab-min", d => d[slabMinKey])
         .attr("data-slab-max", d => d[slabMaxKey])
         .style("stroke", d => d[colorKey])
@@ -128,20 +131,19 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
             hiddenOnArcHoverSelector = classNamesHiddenOnArcHover.map(className => "." + className).join(", "),
             slabArcsSelector = "." + slabArcClassName,
             assessmentSelector = "." + assessmentClassName,
+            scoreLimitSelector = "." + scoreLimitClassName,
             minLimitSelector = "." + scoreLimitClassName + ".min-limit",
             maxLimitSelector = "." + scoreLimitClassName + ".max-limit";
 
         const hoverAction = function (selector, isHoverActive) {
-            var slabArc = selector,
-            isHidden = isHoverActive,
-            isArcActive = isHoverActive,
+            var slabArc = selector.classed("active", isHoverActive),
             slabAssessmentText = isHoverActive ? slabArc.attr("data-assessment") : assessmentText,
             slabMinLimitText = isHoverActive ? slabArc.attr("data-slab-min") : minScore,
             slabMaxLimitText = isHoverActive ? slabArc.attr("data-slab-max") : maxScore,
             slabArcFillColor = isHoverActive ? slabArc.style("fill") : null;
 
-            g.selectAll(hiddenOnArcHoverSelector).classed("hidden", isHidden);
-            slabArc.classed("active", isArcActive);
+            g.selectAll(hiddenOnArcHoverSelector).classed("hidden", isHoverActive);
+            g.selectAll(scoreLimitSelector).classed("active", isHoverActive);
 
             g.select(assessmentSelector).text(slabAssessmentText).style("fill", slabArcFillColor);
             g.select(minLimitSelector).text(slabMinLimitText).style("fill", slabArcFillColor);
