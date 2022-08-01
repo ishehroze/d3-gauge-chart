@@ -24,6 +24,8 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
         slabArcClassName = "slab-arc",
         pointerClassName = "pointer",
         scoreLimitClassName = "scorelimit",
+        minLimitClassName = "min-limit",
+        maxLimitClassName = "max-limit",
         scoreDisplayClassName = "scoredisplay",
         assessmentClassName = "assessment",
 
@@ -50,11 +52,15 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                             .domain([minScore, maxScore])
                             .range([-Math.PI / 2, Math.PI / 2]);
 
+    const scoreToRadianDelta = d3.scaleLinear() 
+                                .domain([minScore, maxScore])
+                                .range([0, Math.PI]);
+
     const scoreToDegreesDelta = d3.scaleLinear()
                                     .domain([minScore, maxScore])
                                     .range([0, 180]);
 
-    const percentToRadian = d3.scaleLinear() 
+    const percentToRadianDelta = d3.scaleLinear() 
                                 .domain([0, 100])
                                 .range([0, Math.PI]);
 
@@ -103,7 +109,7 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
                     .outerRadius(arcInnerRadius - arcWidth)
                     .startAngle(scoreToRadian(slabMin))
                     .endAngle(scoreToRadian(slabMax))
-                    .padAngle(percentToRadian(padPercent))
+                    .padAngle(percentToRadianDelta(padPercent))
                     .cornerRadius(arcWidth);
 
         return arc();
@@ -132,22 +138,75 @@ const drawGaugeChart = function (selector, width, score, slabData, isAnimated) {
             slabArcsSelector = "." + slabArcClassName,
             assessmentSelector = "." + assessmentClassName,
             scoreLimitSelector = "." + scoreLimitClassName,
-            minLimitSelector = "." + scoreLimitClassName + ".min-limit",
-            maxLimitSelector = "." + scoreLimitClassName + ".max-limit";
+            minLimitSelector = "." + scoreLimitClassName + "." + minLimitClassName,
+            maxLimitSelector = "." + scoreLimitClassName + "." + maxLimitClassName;
+
+        const translateScoreLimits = function (minLimit, maxLimit) {
+            var radius = arcInnerRadius - arcWidth / 2,
+                distance = arcInnerRadius / 8.25,
+                dy = arcWidth * 2,
+                angleAdjustment = percentToRadianDelta(padPercent) / 2,
+                minAngleGap = percentToRadianDelta(6);
+
+            var minAngle = scoreToRadianDelta(minLimit) + angleAdjustment,
+                maxAngle = scoreToRadianDelta(maxLimit) + angleAdjustment;
+                
+            if ((maxAngle - minAngle) < minAngleGap) {
+                var midAngle = (maxAngle + minAngle) / 2;
+
+                minAngle = midAngle - minAngleGap / 2;
+                maxAngle = midAngle + minAngleGap / 2;
+            }
+
+            var minXLoc = minLimit === minScore
+                    ? -distance
+                    : radius * (Math.cos(minAngle + Math.PI) + 1) - distance * Math.cos(minAngle),
+                minYLoc = minLimit === minScore
+                    ? 0
+                    : - (radius * Math.sin(minAngle) + distance * Math.sin(minAngle) + dy),
+                maxXLoc = maxLimit === maxScore
+                    ? distance
+                    : radius * (Math.cos(maxAngle + Math.PI) - 1) - distance * Math.cos(maxAngle),
+                maxYLoc = maxLimit === maxScore
+                    ? 0
+                    : - (radius * Math.sin(maxAngle) + distance * Math.sin(maxAngle) + dy);
+
+            return [
+                "translate(" + minXLoc + ", " + minYLoc + ")",
+                "translate(" + maxXLoc + ", " + maxYLoc + ")"
+            ]
+        }
 
         const hoverAction = function (selector, isHoverActive) {
             var slabArc = selector.classed("active", isHoverActive),
-            slabAssessmentText = isHoverActive ? slabArc.attr("data-assessment") : assessmentText,
-            slabMinLimitText = isHoverActive ? slabArc.attr("data-slab-min") : minScore,
-            slabMaxLimitText = isHoverActive ? slabArc.attr("data-slab-max") : maxScore,
+                slabAssessmentText = isHoverActive ? slabArc.attr("data-assessment") : assessmentText,
+                slabMinLimit = +slabArc.attr("data-slab-min"),
+                slabMaxLimit = +slabArc.attr("data-slab-max"),
+                slabMinLimitText = isHoverActive ? slabMinLimit : minScore,
+                slabMaxLimitText = isHoverActive ? slabMaxLimit : maxScore;
+
+            var slabLimitAttrTransforms = translateScoreLimits(slabMinLimit, slabMaxLimit),
+                slabMinLimitAttrTransform = isHoverActive ? slabLimitAttrTransforms[0] : null,
+                slabMaxLimitAttrTransform = isHoverActive ? slabLimitAttrTransforms[1] : null;
+
             slabArcFillColor = isHoverActive ? slabArc.style("fill") : null;
 
             g.selectAll(hiddenOnArcHoverSelector).classed("hidden", isHoverActive);
             g.selectAll(scoreLimitSelector).classed("active", isHoverActive);
 
-            g.select(assessmentSelector).text(slabAssessmentText).style("fill", slabArcFillColor);
-            g.select(minLimitSelector).text(slabMinLimitText).style("fill", slabArcFillColor);
-            g.select(maxLimitSelector).text(slabMaxLimitText).style("fill", slabArcFillColor);
+            g.select(assessmentSelector)
+                .text(slabAssessmentText)
+                .style("fill", slabArcFillColor);
+            
+            g.select(minLimitSelector)
+                .text(slabMinLimitText)
+                .attr("transform", slabMinLimitAttrTransform)
+                .style("fill", slabArcFillColor);
+            
+            g.select(maxLimitSelector)
+                .text(slabMaxLimitText)
+                .attr("transform", slabMaxLimitAttrTransform)
+                .style("fill", slabArcFillColor);
         }
 
         g.selectAll(slabArcsSelector)
