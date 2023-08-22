@@ -1,0 +1,26 @@
+[
+    {
+        "slabMin": 0,
+        "slabMax": 60,
+        "color": "#FF0000",
+        "assessment": "Poor"
+    },
+    {
+        "slabMin": 60,
+        "slabMax": 73.5,
+        "color": "#FF9933",
+        "assessment": "Marginal"
+    },
+    {
+        "slabMin": 73.5,
+        "slabMax": 80,
+        "color": "#00B0F0",
+        "assessment": "Good"
+    },
+    {
+        "slabMin": 80,
+        "slabMax": 100,
+        "color": "#00B050",
+        "assessment": "Excellent"
+    }
+]
